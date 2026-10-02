@@ -1,67 +1,105 @@
-from calculator import Calculator
+import tkinter as tk
+import math
 
-def print_menu():
-    print("\n--- Python Calculator ---")
-    print("1. Add (+)")
-    print("2. Subtract (-)")
-    print("3. Multiply (*)")
-    print("4. Divide (/)")
-    print("5. Power (^)")
-    print("6. Exit")
+class AdvancedCalculator:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Advanced Dark Calculator")
+        self.root.geometry("380x500")
+        self.root.resizable(False, False)
+        
+        
+        self.root.configure(bg="#1e1e1e")
 
-def get_number(prompt: str) -> float:
-    while True:
-        try:
-            return float(input(prompt))
-        except ValueError:
-            print("Invalid input! Please enter a valid number.")
+        
+        self.entry = tk.Entry(
+            root, 
+            font=("Segoe UI", 22), 
+            bg="#2d2d2d", 
+            fg="#ffffff", 
+            bd=0, 
+            justify="right",
+            insertbackground="white"
+        )
+        self.entry.grid(row=0, column=0, columnspan=4, ipady=15, padx=15, pady=(20, 15), sticky="nsew")
 
-def main():
-    calc = Calculator()
+        self.create_buttons()
 
-    while True:
-        print_menu()
-        choice = input("Select an operation (1-6): ").strip()
+    def create_buttons(self):
+        
+        buttons = [
+            ('sin', 1, 0, '#3a3a3a', '#00e5ff'), ('cos', 1, 1, '#3a3a3a', '#00e5ff'), ('tan', 1, 2, '#3a3a3a', '#00e5ff'), ('√', 1, 3, '#3a3a3a', '#00e5ff'),
+            ('x²', 2, 0, '#3a3a3a', '#00e5ff'), ('π', 2, 1, '#3a3a3a', '#00e5ff'), ('C', 2, 2, '#e63946', '#ffffff'), ('⌫', 2, 3, '#e63946', '#ffffff'),
+            ('7', 3, 0, '#2d2d2d', '#ffffff'), ('8', 3, 1, '#2d2d2d', '#ffffff'), ('9', 3, 2, '#2d2d2d', '#ffffff'), ('/', 3, 3, '#ff9500', '#ffffff'),
+            ('4', 4, 0, '#2d2d2d', '#ffffff'), ('5', 4, 1, '#2d2d2d', '#ffffff'), ('6', 4, 2, '#2d2d2d', '#ffffff'), ('*', 4, 3, '#ff9500', '#ffffff'),
+            ('1', 5, 0, '#2d2d2d', '#ffffff'), ('2', 5, 1, '#2d2d2d', '#ffffff'), ('3', 5, 2, '#2d2d2d', '#ffffff'), ('-', 5, 3, '#ff9500', '#ffffff'),
+            ('0', 6, 0, '#2d2d2d', '#ffffff'), ('.', 6, 1, '#2d2d2d', '#ffffff'), ('=', 6, 2, '#007acc', '#ffffff'), ('+', 6, 3, '#ff9500', '#ffffff'),
+        ]
 
-        if choice == '6':
-            print("Goodbye!")
-            break
+        
+        for i in range(7):
+            self.root.grid_rowconfigure(i, weight=1)
+        for j in range(4):
+            self.root.grid_columnconfigure(j, weight=1)
 
-        if choice in ('1', '2', '3', '4', '5',):
-            num1 = get_number("Enter first number: ")
-            num2 = get_number("Enter secend number: ")
+        
+        for (text, row, col, bg, fg) in buttons:
+            cmd = lambda x=text: self.on_button_click(x)
+            tk.Button(
+                self.root,
+                text=text,
+                font=("Segoe UI", 12, "bold"),
+                bg=bg,
+                fg=fg,
+                activebackground="#505050",
+                activeforeground="#ffffff",
+                bd=0,
+                relief="flat",
+                command=cmd
+            ).grid(row=row, column=col, padx=4, pady=4, sticky="nsew")
 
-            try:
-                if choice == '1':
-                    result = calc.add(num1, num2)
-                    op = "+"
-                elif choice == '2':
-                    result = calc.subtract(num1, num2)
-                    op = "-"
-                elif choice == '3':
-                    result = calc.multiply(num1, num2)
-                    op = "*"
-                elif choice == '4':
-                    result = calc.divide(num1, num2)
-                    op = "/"
-                elif choice == '5':
-                    result = calc.power(num1, num2)
-                    op = "^"
+    def on_button_click(self, value):
+        current = self.entry.get()
 
-                print(f"\nResult: {num1} {op} {num2} = {result}")
-
-            except ValueError as err:
-                print(f"\nError: {err}")
-
+        if value == 'C':
+            self.entry.delete(0, tk.END)
+        elif value == '⌫':
+            self.entry.delete(len(current)-1, tk.END)
+        elif value == '=':
+            self.calculate()
+        elif value == 'x²':
+            self.entry.insert(tk.END, '**2')
+        elif value == 'π':
+            self.entry.insert(tk.END, str(math.pi))
+        elif value in ('sin', 'cos', 'tan', '√'):
+            self.entry.insert(tk.END, f"{value}(")
         else:
-            print("Invalid choice. Please pick 1 through 6.")
+            self.entry.insert(tk.END, value)
+
+    def calculate(self):
+        expr = self.entry.get()
+        
+        
+        expr = expr.replace('√(', 'math.sqrt(')
+        expr = expr.replace('sin(', 'math.sin(math.radians(')
+        expr = expr.replace('cos(', 'math.cos(math.radians(')
+        expr = expr.replace('tan(', 'math.tan(math.radians(')
+
+        
+        open_parens = expr.count('(')
+        close_parens = expr.count(')')
+        expr += ')' * (open_parens - close_parens)
+
+        try:
+            
+            result = eval(expr, {"__builtins__": None, "math": math})
+            self.entry.delete(0, tk.END)
+            self.entry.insert(tk.END, f"{result:.8g}")
+        except Exception:
+            self.entry.delete(0, tk.END)
+            self.entry.insert(tk.END, "Error")
 
 if __name__ == "__main__":
-    main()
-
-                   
-
-                   
-
-
-
+    root = tk.Tk()
+    app = AdvancedCalculator(root)
+    root.mainloop()
